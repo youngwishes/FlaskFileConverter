@@ -1,10 +1,15 @@
+import pathlib
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_restful import Api
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+BASE_DIR = pathlib.Path(__file__).parent
+
+UPLOAD_FOLDER = pathlib.Path.joinpath(BASE_DIR, 'media')
+
+ALLOWED_FORMATS = ['wav', ]
 
 
 class Config:
@@ -12,7 +17,7 @@ class Config:
     TESTING = False
     CSRF_ENABLED = True
     SECRET_KEY = os.environ.get('SECRET_KEY', '68f3acbf-2f87-4e5c-a7d6-f1f09526440f')
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:password@localhost:5432/postgres'
+    SQLALCHEMY_DATABASE_URI = "sqlite:///my.db"
 
 
 class ProductionConfig(Config):
@@ -37,6 +42,7 @@ app = Flask(__name__)
 
 app.config.from_object(DevelopmentConfig)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)

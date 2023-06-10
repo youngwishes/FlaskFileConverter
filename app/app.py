@@ -1,17 +1,62 @@
-from config import app, api
+import pathlib
+from config import app, api, ALLOWED_FORMATS, UPLOAD_FOLDER
 from flask_restful import Resource, reqparse
+from models import User, Audio
+from flask import request, send_from_directory, jsonify
 
-parser = reqparse.RequestParser()
-parser.add_argument('username', help='This field cannot be blank', required=True)
+user_parser = reqparse.RequestParser()
+user_parser.add_argument('username', help='This field cannot be blank', required=True)
 
 
-class User(Resource):
+def allowed_file(filename: str) -> bool:
+    return '.' in filename and filename.split('.')[-1].lower() in ALLOWED_FORMATS
+
+
+class UserRes(Resource):
     def post(self):
-        data = parser.parse_args()
-        return data
+        username = user_parser.parse_args()['username']
+        if User.get_by_username(username=username):
+            return "Пользователь с таким никнеймом уже существует", 400
+
+        user = User(username=username)
+        user.save_obj()
+        user_data = user.to_json()
+        user_data.pop('username')
+        return user_data, 201
+
+    def get(self):
+        return jsonify(
+            [user.to_json() for user in User.get_all_users()]
+        )
 
 
-api.add_resource(User, '/api/users')
+@app.route('/api/<name>')
+def download_file(name):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], name)
+
+
+class RecordRes(Resource):
+    def post(self):
+        user_id, token = request.args.get('id'), request.args.get('token')
+        user = User.check_permission(id=user_id, token=token)
+        if not user:
+            return "Invalid token", 403
+        record = request.get_data()
+        if not record:
+            return "Not data in request", 400
+        filename = 'filename.wav'  # TODO Сделать уникальное название файла
+        filepath = pathlib.Path.joinpath(app.config['UPLOAD_FOLDER'], filename)
+        with open(filepath, 'wb') as f:
+            f.write(record)
+            # TODO Сделать конвертацию в MP3
+        record = Audio(url=str(filepath), user_id=user_id)
+        record.save_obj()
+
+        return request.url  # TODO Сделать ссылку на скачивание
+
+
+api.add_resource(UserRes, '/api/users')
+api.add_resource(RecordRes, '/api/records')
 
 if __name__ == '__main__':
     app.run()
