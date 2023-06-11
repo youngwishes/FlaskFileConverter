@@ -9,8 +9,6 @@ BASE_DIR = pathlib.Path(__file__).parent
 
 UPLOAD_FOLDER = pathlib.Path.joinpath(BASE_DIR, 'media')
 
-ALLOWED_FORMATS = ['wav', ]
-
 
 class Config:
     DEBUG = False
@@ -47,3 +45,6 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 api = Api(app)
+
+if not os.path.exists(os.path.join(BASE_DIR, 'media')):
+    os.makedirs('media')

@@ -45,9 +45,23 @@ class RecordService(AbstractMediaService):
         mp3_fullpath = self.get_path_with_suffix(suffix='.mp3')
         try:
             AudioSegment.from_wav(wav_fullpath).export(mp3_fullpath, format='mp3')
-        except CouldntDecodeError:
+        except (CouldntDecodeError, IndexError):
             self.delete_old_file(path=wav_fullpath)
             return
         if delete_converted:
             self.delete_old_file(path=wav_fullpath)
-        return os.path.split(mp3_fullpath)[-1]
+
+        return MP3(mp3_fullpath=mp3_fullpath)
+
+
+class MP3:
+    def __init__(self, mp3_fullpath):
+        self.__mp3_fullpath = mp3_fullpath
+
+    @property
+    def uuid(self):
+        return os.path.split(self.__mp3_fullpath)[-1]
+
+    @property
+    def fullpath(self):
+        return self.__mp3_fullpath

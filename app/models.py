@@ -1,7 +1,10 @@
+import pathlib
 from typing import Any
 from config import db
 import uuid
 from sqlalchemy.orm import relationship
+from services.records import MP3
+from config import UPLOAD_FOLDER
 
 
 class User(db.Model):
@@ -52,7 +55,9 @@ class Record(db.Model):
 
     @classmethod
     def get_user_record(cls, user_id: int, record_id: int):
-        return db.session.query(Record.uuid).filter(Record.id == record_id, Record.user_id == user_id).scalar()
+        uuid = db.session.query(Record.uuid).filter(Record.id == record_id, Record.user_id == user_id).scalar()
+        if uuid:
+            return MP3(mp3_fullpath=pathlib.Path(UPLOAD_FOLDER).joinpath(uuid))
 
     def save_obj(self):
         db.session.add(self)
