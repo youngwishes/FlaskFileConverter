@@ -1,0 +1,30 @@
+version: '3.1'
+
+services:
+
+  app:
+    build: .
+    container_name: flask_audio
+    restart: always
+    ports:
+      - "5050:5000"
+    environment:
+      SQLALCHEMY_DATABASE_URI: "postgresql://flaskaudio:12345@db:5432/flaskaudio"
+      SECRET_KEY: '68f3acbf-2f87-4e5c-a7d6-f1f09526440f'
+    depends_on:
+      - db
+    command: gunicorn --bind 0.0.0.0:5000 app:app
+
+  db:
+    image: postgres:15.3
+    restart: always
+    volumes:
+      - pgdb_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_PASSWORD=12345
+      - POSTGRES_USER=flaskaudio
+      - POSTGRES_DB=flaskaudio
+    container_name: pgdb
+
+volumes:
+  pgdb_data: null

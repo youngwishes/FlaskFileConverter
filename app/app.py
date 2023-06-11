@@ -1,8 +1,11 @@
 import pathlib
+import uuid
+import pydub
 from config import app, api, ALLOWED_FORMATS, UPLOAD_FOLDER
 from flask_restful import Resource, reqparse
 from models import User, Audio
 from flask import request, send_from_directory, jsonify
+import tempfile
 
 user_parser = reqparse.RequestParser()
 user_parser.add_argument('username', help='This field cannot be blank', required=True)
@@ -44,12 +47,14 @@ class RecordRes(Resource):
         record = request.get_data()
         if not record:
             return "Not data in request", 400
-        filename = 'filename.wav'  # TODO Сделать уникальное название файла
-        filepath = pathlib.Path.joinpath(app.config['UPLOAD_FOLDER'], filename)
-        with open(filepath, 'wb') as f:
+        filename = uuid.uuid4().hex  # TODO Сделать уникальное название файла
+        filepath = pathlib.Path.joinpath(app.config['UPLOAD_FOLDER'], filename).with_suffix('.wav')
+        with open(filepath.with_suffix('.wav'), 'wb') as f:
             f.write(record)
-            # TODO Сделать конвертацию в MP3
-        record = Audio(url=str(filepath), user_id=user_id)
+        print(filepath)
+        sound = pydub.AudioSegment.from_wav(filepath)
+        sound.export(filepath.with_suffix('.mp3'), format='wav')
+        record = Audio(url=str(filepath.with_suffix('.mp3')), user_id=user_id)
         record.save_obj()
 
         return request.url  # TODO Сделать ссылку на скачивание
