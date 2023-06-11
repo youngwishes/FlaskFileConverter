@@ -1,0 +1,150 @@
+{
+	"info": {
+		"_postman_id": "df0ae2c3-0e83-4370-a57d-34a9d25b6523",
+		"name": "WavToMP3Service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20953829"
+	},
+	"item": [
+		{
+			"name": "add user",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"user3\"\r\n}"
+				},
+				"url": {
+					"raw": "{{dhost}}/api/users",
+					"host": [
+						"{{dhost}}"
+					],
+					"path": [
+						"api",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "convert",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "file",
+					"file": {
+						"src": "/C:/Все/Музыка/Моё/Треки/моменты/djrfk.wav"
+					}
+				},
+				"url": {
+					"raw": "{{dhost}}/api/records?token=61099e09-236e-4365-aaf4-d4af972046a9&id=3",
+					"host": [
+						"{{dhost}}"
+					],
+					"path": [
+						"api",
+						"records"
+					],
+					"query": [
+						{
+							"key": "token",
+							"value": "61099e09-236e-4365-aaf4-d4af972046a9"
+						},
+						{
+							"key": "id",
+							"value": "3"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "all users",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{dhost}}/api/users",
+					"host": [
+						"{{dhost}}"
+					],
+					"path": [
+						"api",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get mp3",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{dhost}}/api/records?id=4&uer=3",
+					"host": [
+						"{{dhost}}"
+					],
+					"path": [
+						"api",
+						"records"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "4"
+						},
+						{
+							"key": "uer",
+							"value": "3"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "host",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "dhost",
+			"value": "http://localhost:5050",
+			"type": "string"
+		}
+	]
+}
