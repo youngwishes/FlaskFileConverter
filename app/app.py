@@ -1,11 +1,8 @@
-import pathlib
-import uuid
-import pydub
 from config import app, api, ALLOWED_FORMATS, UPLOAD_FOLDER
 from flask_restful import Resource, reqparse
-from models import User, Audio
-from flask import request, send_from_directory, jsonify
-import tempfile
+from models import User, Record
+from flask import request, send_from_directory, jsonify, url_for
+from services.records import RecordService
 
 user_parser = reqparse.RequestParser()
 user_parser.add_argument('username', help='This field cannot be blank', required=True)
@@ -33,31 +30,30 @@ class UserRes(Resource):
         )
 
 
-@app.route('/api/<name>')
-def download_file(name):
-    return send_from_directory(app.config["UPLOAD_FOLDER"], name)
-
-
 class RecordRes(Resource):
     def post(self):
         user_id, token = request.args.get('id'), request.args.get('token')
         user = User.check_permission(id=user_id, token=token)
         if not user:
-            return "Invalid token", 403
+            return "Invalid token or user id", 403
         record = request.get_data()
         if not record:
             return "Not data in request", 400
-        filename = uuid.uuid4().hex  # TODO Сделать уникальное название файла
-        filepath = pathlib.Path.joinpath(app.config['UPLOAD_FOLDER'], filename).with_suffix('.wav')
-        with open(filepath.with_suffix('.wav'), 'wb') as f:
-            f.write(record)
-        print(filepath)
-        sound = pydub.AudioSegment.from_wav(filepath)
-        sound.export(filepath.with_suffix('.mp3'), format='wav')
-        record = Audio(url=str(filepath.with_suffix('.mp3')), user_id=user_id)
+        service = RecordService(binary_data=record, filepath=app.config['UPLOAD_FOLDER'])
+        uuid = service.convert()
+        record = Record(uuid=uuid, user_id=user_id)
         record.save_obj()
 
-        return request.url  # TODO Сделать ссылку на скачивание
+        return request.url
+
+    def get(self):
+        record_id, user_id = request.args.get('id'), request.args.get('user')
+        if record_id and user_id:
+            mp3uuid = Record.get_user_record(record_id=record_id, user_id=user_id)
+            if mp3uuid:
+                return send_from_directory(directory=app.config['UPLOAD_FOLDER'], path=mp3uuid)
+            return "Такой аудиозаписи не существует", 400
+        return "Не указаны параметры id и user", 400
 
 
 api.add_resource(UserRes, '/api/users')

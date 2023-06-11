@@ -1,5 +1,4 @@
 from typing import Any
-
 from config import db
 import uuid
 from sqlalchemy.orm import relationship
@@ -11,7 +10,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     access_token = db.Column('access_token', db.String, default=lambda: str(uuid.uuid4()), unique=True)
     username = db.Column(db.String, nullable=False, unique=True)
-    music = relationship('Audio', backref="user", lazy="joined", cascade="all, delete-orphan")
+    records = relationship('Record', backref="user", lazy="joined", cascade="all, delete-orphan")
 
     def __init__(self, username: str) -> None:
         self.username = username
@@ -40,16 +39,20 @@ class User(db.Model):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
-class Audio(db.Model):
-    __tablename__ = "audio"
+class Record(db.Model):
+    __tablename__ = "record"
 
-    id = db.Column(db.String, default=lambda: str(uuid.uuid4()), unique=True, primary_key=True)
-    url = db.Column(db.String)
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(db.String, unique=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-    def __init__(self, url: str, user_id: int) -> None:
-        self.url = url
+    def __init__(self, uuid: str, user_id: int) -> None:
+        self.uuid = uuid
         self.user_id = user_id
+
+    @classmethod
+    def get_user_record(cls, user_id: int, record_id: int):
+        return db.session.query(Record.uuid).filter(Record.id == record_id, Record.user_id == user_id).scalar()
 
     def save_obj(self):
         db.session.add(self)
