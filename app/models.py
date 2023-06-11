@@ -54,7 +54,7 @@ class Record(db.Model):
         self.user_id = user_id
 
     @classmethod
-    def get_user_record(cls, user_id: int, record_id: int):
+    def get_user_record(cls, user_id: int, record_id: int) -> Any:
         uuid = db.session.query(Record.uuid).filter(Record.id == record_id, Record.user_id == user_id).scalar()
         if uuid:
             return MP3(mp3_fullpath=pathlib.Path(UPLOAD_FOLDER).joinpath(uuid))
