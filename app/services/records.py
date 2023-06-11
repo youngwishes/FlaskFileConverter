@@ -3,6 +3,7 @@ from pathlib import Path
 import uuid
 import os
 from pydub import AudioSegment
+from pydub.exceptions import CouldntDecodeError
 
 
 class AbstractMediaService(ABC):
@@ -42,7 +43,11 @@ class RecordService(AbstractMediaService):
         wav_fullpath = self.get_path_with_suffix(suffix='.wav')
         self.save(wav_fullpath)
         mp3_fullpath = self.get_path_with_suffix(suffix='.mp3')
-        AudioSegment.from_wav(wav_fullpath).export(mp3_fullpath, format='mp3')
+        try:
+            AudioSegment.from_wav(wav_fullpath).export(mp3_fullpath, format='mp3')
+        except CouldntDecodeError:
+            self.delete_old_file(path=wav_fullpath)
+            return
         if delete_converted:
             self.delete_old_file(path=wav_fullpath)
         return os.path.split(mp3_fullpath)[-1]

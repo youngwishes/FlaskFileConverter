@@ -1,7 +1,8 @@
+import pathlib
 from config import app, api, ALLOWED_FORMATS, UPLOAD_FOLDER
 from flask_restful import Resource, reqparse
 from models import User, Record
-from flask import request, send_from_directory, jsonify, url_for
+from flask import request, jsonify, send_file
 from services.records import RecordService
 
 user_parser = reqparse.RequestParser()
@@ -32,7 +33,7 @@ class UserRes(Resource):
 
 class RecordRes(Resource):
     def post(self):
-        user_id, token = request.args.get('id'), request.args.get('token')
+        user_id, token = request.args.get('id', type=int), request.args.get('token')
         user = User.check_permission(id=user_id, token=token)
         if not user:
             return "Invalid token or user id", 403
@@ -41,19 +42,21 @@ class RecordRes(Resource):
             return "Not data in request", 400
         service = RecordService(binary_data=record, filepath=app.config['UPLOAD_FOLDER'])
         uuid = service.convert()
+        if not uuid:
+            return "Load file with .wav extension"
         record = Record(uuid=uuid, user_id=user_id)
         record.save_obj()
-
-        return request.url
+        return request.host_url + api.url_for(RecordRes, id=record.id, user=user_id)
 
     def get(self):
-        record_id, user_id = request.args.get('id'), request.args.get('user')
+        record_id, user_id = request.args.get('id', type=int), request.args.get('user', type=int)
         if record_id and user_id:
             mp3uuid = Record.get_user_record(record_id=record_id, user_id=user_id)
+            filepath = pathlib.Path.joinpath(app.config['UPLOAD_FOLDER'], mp3uuid)
             if mp3uuid:
-                return send_from_directory(directory=app.config['UPLOAD_FOLDER'], path=mp3uuid)
-            return "Такой аудиозаписи не существует", 400
-        return "Не указаны параметры id и user", 400
+                return send_file(filepath, as_attachment=True)
+            return "Record does not exists", 400
+        return "Check parameters: id=?&user=?", 400
 
 
 api.add_resource(UserRes, '/api/users')
