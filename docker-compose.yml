@@ -6,6 +6,8 @@ services:
     build: .
     container_name: flask_audio
     restart: always
+    volumes:
+      - media_data:/user/src/app/media
     ports:
       - "5050:5000"
     environment:
@@ -28,3 +30,4 @@ services:
 
 volumes:
   pgdb_data: null
+  media_data: null
