@@ -57,3 +57,6 @@ api.add_resource(RecordRes, '/api/records')
 
 if __name__ == '__main__':
     app.run()
+
+
+# Integrate sentry
